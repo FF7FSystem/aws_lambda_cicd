@@ -1,0 +1,56 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: An AWS Serverless Application Model template describing your function.
+
+Resources:
+  CoffeinUploadsNotificationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: function/  
+      Description: 'Lambda function for SQS notifications'
+      MemorySize: 128  
+      Timeout: 5 
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.12
+      Architectures:
+        - x86_64
+      EphemeralStorage:
+        Size: 512
+      EventInvokeConfig:
+        MaximumEventAgeInSeconds: 21600
+        MaximumRetryAttempts: 2
+      PackageType: Zip
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - sns:Publish
+              Resource: arn:aws:sns:*:*:*
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+              Resource: arn:aws:logs:us-east-1:886436967044:*
+            - Effect: Allow
+              Action:
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource:
+                - arn:aws:logs:us-east-1:886436967044:log-group:/aws/lambda/Coffein-UploadsNotificationFunction:*
+            - Sid: AWSLambdaSQSPollerExecutionRole
+              Effect: Allow
+              Action:
+                - sqs:DeleteMessage
+                - sqs:GetQueueAttributes
+                - sqs:ReceiveMessage
+              Resource: arn:aws:sqs:us-east-1:886436967044:Coffein-UploadsNotificationQueue
+
+      SnapStart:
+        ApplyOn: None
+      Events:
+        SQS1:
+          Type: SQS
+          Properties:
+            Queue: arn:aws:sqs:us-east-1:886436967044:Coffein-UploadsNotificationQueue  # Прямой ARN очереди
+            BatchSize: 10
+      RuntimeManagementConfig:
+        UpdateRuntimeOn: Auto
