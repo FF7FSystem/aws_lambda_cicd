@@ -1,0 +1,24 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.12
+  pre_build:
+    commands:
+      - echo "Installing dependencies..."
+      - pip install -r requirements.txt -t .
+  build:
+    commands:
+      - echo "Building the Lambda package..."
+      - zip -r function.zip . -x "*.git*"
+      - echo "Running AWS SAM package..."
+      - sam package --s3-bucket static-site-bucket-ff7f --output-template-file packaged.yaml
+  post_build:
+    commands:
+      - echo "Build completed successfully!"
+artifacts:
+  files:
+    - packaged.yaml
+    - function.zip
+  discard-paths: yes
